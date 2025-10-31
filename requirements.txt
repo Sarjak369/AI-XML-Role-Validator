@@ -11,6 +11,5 @@ chromadb
 thefuzz
 python-Levenshtein
 streamlit
-pymupdf
+PyMuPDF
 tiktoken
-fitz

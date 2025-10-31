@@ -53,23 +53,15 @@ class RAGPDFExtractor:
         """
         Extracts text content from a PDF file, including tables.
 
-        Uses PyMuPDF to extract:
+        Uses PyMuPDF (fitz) to extract:
         - Text blocks
         - Tables (structured data)
         - Preserves formatting for better context
-
-        Args:
-            pdf_path (str): Path to the PDF file
-
-        Returns:
-            str: Extracted full text including table data
         """
         full_text = []
 
         try:
-            # Open PDF document
-
-            pdf_document = fitz.open(pdf_path)  # type:ignore
+            pdf_document = fitz.open(pdf_path)
             print(
                 f"📄 Processing PDF: {pdf_path} ({pdf_document.page_count} pages)")
 
@@ -77,29 +69,32 @@ class RAGPDFExtractor:
             for page_num in range(pdf_document.page_count):
                 page = pdf_document.load_page(page_num)
 
-                # Extract text blocks
+                # --- Extract text blocks ---
                 text_blocks = page.get_text("blocks")
                 for block in text_blocks:
-                    # block[4] contains the text content
                     text_content = block[4].strip()
                     if text_content:
                         full_text.append(text_content)
 
-                # Extract tables
-                tables = page.find_tables()
+                # --- Extract tables (new API) ---
+                try:
+                    # type: ignore[attr-defined]
+                    table_finder = page.find_tables()  # type:ignore
+                    tables = getattr(table_finder, "tables", [])
+                except Exception:
+                    tables = []
+
                 if tables:
                     for table in tables:
-                        # Extract table data
                         table_rows = []
                         for row_data in table.extract():
-                            # Join cells with pipe separator
                             row_text = " | ".join([
                                 str(cell) if cell is not None else ""
                                 for cell in row_data
                             ])
                             table_rows.append(row_text)
 
-                        # Format table with clear markers
+                        # Format table nicely
                         table_str = "\n".join(table_rows)
                         formatted_table = (
                             f"\n--- TABLE: ROLES AND INFORMATION ---\n"
@@ -110,13 +105,11 @@ class RAGPDFExtractor:
 
             pdf_document.close()
 
-            # Combine all extracted text
             full_document_text = "\n\n".join(full_text)
 
-            # Log extraction summary
             print(f"✅ Extracted {len(full_document_text)} characters from PDF")
-            print(
-                f"📊 Found {len(tables)} tables" if 'tables' in locals() else "")
+            if 'tables' in locals():
+                print(f"📊 Found {len(tables)} tables")
 
             return full_document_text
 
