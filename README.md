@@ -1,28 +1,183 @@
 # 🤖 AI Role Validator
 
 **XML ↔ PDF Job Role Comparison powered by LangChain, OpenAI, and ChromaDB**
-An intelligent AI-powered validator that compares structured XML-defined job roles against unstructured PDF documents. The system extracts roles from XML, identifies roles in PDFs via Retrieval-Augmented Generation (RAG), and generates a comprehensive validation report showing matched, fuzzy, and incorrect roles—fully automated.
+An intelligent validator that compares *structured* XML-defined job roles against *unstructured* PDF documents. It extracts roles from XML, discovers roles inside PDFs via a RAG pipeline, and produces an auditable report highlighting **matched**, **fuzzy-matched**, **incorrect**, and **missing** roles.
+
+---
+
+## 🧩 The Problem
+
+Organizations keep an official **master list of job roles** (e.g., HR database / XML / regulatory submission). In practice, the *same roles* appear inconsistently across vendor resumes, SOWs, audits, and internal PDFs (abbreviations, typos, synonyms, table formats, etc.). Manual validation is slow and error-prone.
+
+### 💡 Real-Time Example
+
+* **Master XML** (ground truth):
+
+  ```xml
+  <roles>
+    <role>Software Engineer</role>
+    <role>Data Scientist</role>
+    <role>Quality Assurance Analyst</role>
+    <role>Project Manager</role>
+  </roles>
+  ```
+  
+* **Incoming PDFs** (unstructured):
+
+  * "Software Eng."
+  * "Data Science Specialist"
+  * "QA Tester"
+  * "Sr. Project Mgr"
+  * "UI/UX Designer"
+
+**Questions the reviewer must answer:**
+
+* Is *Software Eng.* the same as **Software Engineer**?
+* Does *QA Tester* map to **Quality Assurance Analyst**?
+* Is *Data Science Specialist* an allowed role or a mismatch?
+
+This project **automates** that reasoning using **LLMs + RAG + fuzzy matching**, then emits a **validation report** (and downloadable results) for auditability.
 
 ---
 
 ## 🌟 Features
 
-### ✨ Core Capabilities
+* **📄 XML Role Extraction** – Parse XML via XPath to produce the master role list
+* **📋 PDF Content Extraction** – Extract text + tables using PyMuPDF
+* **🧠 LLM-Powered Role Extraction** – OpenAI GPT models read the PDF content and list roles
+* **🔍 RAG Enhancement** – ChromaDB vector store for semantic retrieval from PDF chunks
+* **≈ Fuzzy Matching** – Levenshtein & partial ratios to handle typos/abbreviations
+* **📊 Validation Report** – Matched / Fuzzy / Incorrect / Missing roles with counts
+* **⚙️ Tunable Thresholds** – Configure similarity sensitivity per environment
+* **💻 Dual Interface** – CLI runner and Streamlit web UI
 
-- **📄 XML Role Extraction** - Parse XML files to extract master list of defined job roles
-- **📋 PDF Content Extraction** - Extract text and tables from PDFs using PyMuPDF
-- **🧠 LLM-Powered Role Extraction** - Uses OpenAI GPT models to identify roles in complex documents
-- **🔍 RAG-Based Enhancement** - ChromaDB vector store for semantic search and context retrieval
-- **≈ Fuzzy Matching** - Handles typos, abbreviations, and formatting inconsistencies
-- **📊 Detailed Validation Reports** - Categorizes roles as direct matches, fuzzy matches, or incorrect
-- **⚙️ Configurable Thresholds** - Tune fuzzy matching sensitivity
-- **💻 Dual Interface** - CLI and Streamlit web UI
+---
 
-### 🎯 Matching Strategies
+## 🏗️ Architecture & Diagrams
 
-1. **Direct Matching** - Exact matches after normalization
-2. **Fuzzy Matching** - Catches typos (e.g., "Managar" → "Manager")
-3. **Partial Matching** - Handles abbreviations (e.g., "SW Eng" → "Software Engineer")
+### 1) System Architecture
+
+![System Architecture](assets/diagrams/System_Architecture.png)
+
+### 2) Data Flow – Complete Pipeline
+
+![Data Flow – Complete Pipeline](assets/diagrams/DataFlow_Complete_Pipeline.png)
+
+### 3) Performance and Scalability
+
+![Performance and Scalability](assets/diagrams/Performance_and_Scalability.png)
+
+### 4) RAG Pipeline
+
+![RAG Pipeline](assets/diagrams/RAG_Pipeline.png)
+
+### 5) Role Comparison Logic
+
+![Role Comparison Logic](assets/diagrams/Role_Comparison_Logic_Flow.png)
+
+### 6) Component Interaction
+
+![Component Interaction](assets/diagrams/Component_Interaction.png)
+
+### 7) Technology Stack Visualization
+
+![Technology Stack Visualization](assets/diagrams/Technology_Stack_Visualization.png)
+
+---
+
+## 📸 UI Walkthrough (Screens)
+
+### 1) Home + Configuration
+
+![Home + Configuration](assets/ui/1.png)
+
+*Set your fuzzy threshold and see the step-by-step guide.*
+
+### 2) Upload XML & PDF
+
+![Upload XML & PDF](assets/ui/2.png)
+
+*Attach the master roles XML and the target PDF; click Start Validation.*
+
+### 3) Results — Summary (Matched tab)
+
+![Processing](assets/ui/3.png)
+*Dashboard shows XML/PDF role counts, matched total, and high-level status.*
+
+### 4) Results — Incorrect Roles tab
+
+![LLM Extraction](assets/ui/4.png)
+*Roles present in the PDF that don’t map to any XML role (even with fuzziness).*
+
+### 5) Results — All Roles tab
+
+![Validation Summary](assets/ui/5.png)
+*Compare ground-truth XML roles against extracted PDF roles side-by-side.*
+
+### 6) Detailed Validation Report
+
+![Detailed Report](assets/ui/6.png)
+*Auditable, copyable report; includes stats, matched/fuzzy/incorrect, and conclusion. Downloadable.*
+
+### 7) Optional RAG Q&A — List roles
+
+![RAG QA](assets/ui/7.png)
+*Ask questions about the PDF; here the model lists all roles mentioned.*
+
+### 8) Optional RAG Q&A — Role counts
+
+![Settings](assets/ui/8.png)
+*Get quick analytics, like per-role frequency and total counts.*
+
+### 9) Optional RAG Q&A — New roles in pipeline
+
+![Export](assets/UI/9.png)
+*Extract insights (e.g., new roles referenced) to support downstream decisions.*
+
+---
+
+## 🧠 How It Works
+
+### Phase 1: XML Role Extraction
+
+* Parse XML with `lxml`, extract roles via XPath → **Ground Truth List**
+
+### Phase 2: PDF Processing & RAG
+
+1. Extract text & tables with PyMuPDF
+2. Chunk with `RecursiveCharacterTextSplitter`
+3. Generate embeddings (OpenAI)
+4. Persist to **ChromaDB**
+5. (Optional) RAG QA over PDF content
+
+### Phase 3: Role Extraction (LLM)
+
+* Prompt the LLM with full PDF content (and/or retrieved chunks) to produce a **comma-separated role list**
+
+### Phase 4: Intelligent Matching
+
+* **Normalize** both lists (lowercase, punctuation removal)
+* **Direct match** → mark as Matched
+* Else **Fuzzy match** (Levenshtein / partial ratio) → mark as Fuzzy Matched
+* Else → mark as **Incorrect** (in PDF, not in XML)
+* Also compute **Missing** (in XML, not found in PDF)
+
+### Phase 5: Validation Report
+
+* Aggregates **Matched / Fuzzy / Incorrect / Missing**
+* Provides **counts, percentages**, and **downloadable** outputs
+
+---
+
+## 🌍 Real-World Relevance & Gaps Solved
+
+| Problem in Industry                                                           | How This Solves It                                                    |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Manual validation of job roles across hundreds of vendor/compliance documents | AI automates it, saving hours/days of manual review                   |
+| Role name inconsistencies (abbreviations, typos, synonyms)                    | Fuzzy matching + LLM extraction handles variations reliably           |
+| PDFs lack structure and uniform format                                        | RAG converts unstructured text into searchable, structured chunks     |
+| Regulatory/audit exposure due to mismatched roles                             | Produces an auditable validation report for evidence and traceability |
+| HR/Procurement workflows reliant on external PDFs                             | Standardizes roles for integration with internal systems              |
 
 ---
 
@@ -47,16 +202,16 @@ AI-Role-Validator/
 │       └── document_with_roles.pdf   # PDF to validate
 │
 ├── src/                              # 🧠 Core application logic
-│   ├── langchain_client.py           # 🔮 LLM and embeddings via LangChain
-│   ├── vectorstore_client.py         # 🗄️ ChromaDB vector store operations
-│   ├── pdf_extractor_rag.py          # 📘 PDF extraction and RAG pipeline
+│   ├── langchain_client.py           # 🔮 LLM + embeddings via LangChain
+│   ├── vectorstore_client.py         # 🗄️ ChromaDB operations
+│   ├── pdf_extractor_rag.py          # 📘 PDF extraction and RAG
 │   ├── xml_parser.py                 # 📄 XML parsing with XPath
-│   ├── role_comparer.py              # ⚖️ Role comparison with fuzzy matching
-│   ├── utils.py                      # 🔧 Helper functions
-│   └── main.py                       # 🚀 CLI pipeline runner
+│   ├── role_comparer.py              # ⚖️ Fuzzy comparison logic
+│   ├── utils.py                      # 🔧 Helpers
+│   └── main.py                       # 🚀 CLI runner
 │
-└── chroma_store/                     # 💾 Auto-created ChromaDB storage
-    └── role_validator/               # (SQLite + embeddings)
+└── chroma_store/                     # 💾 Chroma persistence (auto-created)
+    └── role_validator/               # SQLite + embeddings
 ```
 
 ---
@@ -65,193 +220,50 @@ AI-Role-Validator/
 
 ### Prerequisites
 
-- **Python 3.9+**
-- **OpenAI API Key** ([Get one here](https://platform.openai.com/api-keys))
-- **UV package manager** (recommended) or pip
+* **Python 3.9+**
+* **OpenAI API Key**
+* **UV** (recommended) *or* **pip**
 
-### Installation
-
-#### Option 1: Using UV (Recommended)
+### Install (UV)
 
 ```bash
-# Install UV if you haven't
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone the repository
-git clone <your-repo-url>
-cd AI-Role-Validator
-
-# Create virtual environment and install dependencies
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate   # Windows: .venv\\Scripts\\activate
 uv pip install -r requirements.txt
 ```
 
-#### Option 2: Using pip
+### Install (pip)
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd AI-Role-Validator
-
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate     # Windows: venv\\Scripts\\activate
 pip install -r requirements.txt
 ```
 
-### Configuration
-
-1. **Create `.env` file** in the project root:
+### Configure `.env`
 
 ```env
-# Copy the example .env file
-cp .env .env.local
-
-# Edit .env and add your OpenAI API key
-```
-
-2.**Set your OpenAI API Key** in `.env`:
-
-```env
-OPENAI_API_KEY=sk-your-api-key-here
-```
-
-3.**Optional configurations** in `.env`:
-
-```bash
-# Vector database (default: chroma)
+OPENAI_API_KEY=sk-your-key
 VECTOR_DB=chroma
-
-# ChromaDB storage location
 CHROMA_PERSIST_DIR=./chroma_store
-
-# PDF chunking settings
 PDF_CHUNK_SIZE=1000
 PDF_CHUNK_OVERLAP=100
-
-# Fuzzy matching threshold (0-100)
 FUZZY_MATCH_THRESHOLD=80
-
-# OpenAI model selection
 LLM_MODEL=gpt-4o-mini
 EMBEDDING_MODEL=text-embedding-3-small
 ```
 
----
-
-## 📖 Usage
-
-### Method 1: Streamlit Web UI (Recommended for beginners)
+### Run – Streamlit UI
 
 ```bash
-# Run the Streamlit app
 streamlit run app.py
 ```
 
-Then:
-
-1. Open your browser to `http://localhost:8501`
-2. Upload your XML file (defined roles)
-3. Upload your PDF file (document to validate)
-4. Click **"Start Validation"**
-5. View the detailed report
-
-### Method 2: Command Line Interface
+### Run – CLI
 
 ```bash
-# Run the CLI version
 python src/main.py
 ```
-
-**Requirements:**
-
-- Place your XML file at: `data/xml_data/defined_roles.xml`
-- Place your PDF file at: `data/pdf_data/document_with_roles.pdf`
-
-The CLI will:
-
-1. Extract roles from XML
-2. Process and index the PDF
-3. Extract roles from PDF using AI
-4. Compare and generate a report
-5. Save results to console
-
----
-
-## 📝 Example Files
-
-### Sample XML (`data/xml_data/defined_roles.xml`)
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<roles>
-    <role>Software Engineer</role>
-    <role>Project Manager</role>
-    <role>Senior Developer</role>
-    <role>QA Tester</role>
-    <role>Business Analyst</role>
-    <role>Data Scientist</role>
-</roles>
-```
-
-### Sample PDF Content
-
-Create a PDF with content like:
-
-```bash
-Our team includes a Software Engineer, Project Manager, and Senior Developer.
-We are also looking for a Quality Assurance Tester and a Data Analyst.
-
-Staffing Table:
-| Role              | Count |
-|-------------------|-------|
-| Software Engineer | 3     |
-| Project Manager   | 1     |
-| Marketing Lead    | 2     |
-```
-
----
-
-## 🧪 How It Works
-
-### 1. XML Role Extraction
-
-- Parses XML using `lxml`
-- Extracts role text via XPath expressions
-- Returns list of ground truth roles
-
-### 2. PDF Processing & RAG
-
-- **Extract**: PyMuPDF extracts text and tables
-- **Chunk**: RecursiveCharacterTextSplitter creates semantic chunks
-- **Embed**: OpenAI embeddings convert chunks to vectors
-- **Store**: ChromaDB stores vectors for retrieval
-
-### 3. Role Extraction from PDF
-
-- Full PDF text sent to OpenAI LLM
-- Custom prompt instructs role extraction
-- Response parsed into clean role list
-
-### 4. Intelligent Comparison
-
-```bash
-For each PDF role:
-├─ Try exact match (normalized)
-├─ Try fuzzy match (Levenshtein distance)
-├─ Try partial match (substring matching)
-└─ Mark as incorrect if no matches
-```
-
-### 5. Report Generation
-
-- ✅ **Matched**: Roles found in both
-- ≈ **Fuzzy**: Similar roles (typos/abbreviations)
-- ❌ **Incorrect**: PDF roles not in XML
-- ⚠️ **Missing**: XML roles not found in PDF
 
 ---
 
@@ -261,26 +273,13 @@ For each PDF role:
 
 Controls how similar roles need to be for a fuzzy match (0-100):
 
-- **90-100**: Very strict (only minor typos)
-- **80-89**: Moderate (default, handles typos and minor variations)
-- **70-79**: Lenient (accepts more abbreviations)
-- **Below 70**: Very lenient (may cause false positives)
+**90-100**: Very strict (only minor typos)
 
-### LLM Model Selection
+**80-89**: Moderate (default, handles typos and minor variations)
 
-In `.env`:
+**70-79**: Lenient (accepts more abbreviations)
 
-```env
-# Cost-effective (recommended for most cases)
-LLM_MODEL=gpt-4o-mini
-
-# More powerful (for complex documents)
-LLM_MODEL=gpt-4o
-
-# Embeddings
-EMBEDDING_MODEL=text-embedding-3-small  # 1536 dimensions
-# EMBEDDING_MODEL=text-embedding-3-large  # 3072 dimensions (more accurate, higher cost)
-```
+**Below 70**: Very lenient (may cause false positives)
 
 ---
 
@@ -299,43 +298,12 @@ EMBEDDING_MODEL=text-embedding-3-small  # 1536 dimensions
 
 ---
 
-## 🐛 Troubleshooting
+## 🧪 Troubleshooting
 
-### Issue: "No roles extracted from PDF"
-
-**Possible causes:**
-
-1. PDF is image-based (needs OCR)
-2. Roles are in non-standard format
-3. LLM prompt needs adjustment
-
-**Solutions:**
-
-- Use text-based PDFs
-- Adjust `ROLE_EXTRACTION_PROMPT` in `config/config.py`
-- Try a more powerful model (`gpt-4o`)
-
-### Issue: "OpenAI API key not found"
-
-**Solution:**
-
-- Ensure `.env` file exists in project root
-- Verify `OPENAI_API_KEY=sk-...` is set correctly
-- Restart your terminal/IDE after creating `.env`
-
-### Issue: "ChromaDB connection error"
-
-**Solution:**
-
-- Delete `chroma_store/` directory
-- Restart the application (will recreate)
-
-### Issue: Too many fuzzy matches
-
-**Solution:**
-
-- Increase `FUZZY_MATCH_THRESHOLD` in `.env`
-- Default is 80, try 85 or 90
+**No roles from PDF** → Ensure PDF is text-based (not images) or add OCR; try a stronger model (`gpt-4o`).
+**Too many fuzzy matches** → Increase `FUZZY_MATCH_THRESHOLD` (e.g., 85–90).
+**Chroma errors** → Delete `chroma_store/` and re-run (auto-rebuild).
+**API key not found** → Verify `.env` and restart terminal/IDE.
 
 ---
 
@@ -357,19 +325,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
-
-- **LangChain** - Powerful LLM orchestration framework
-- **OpenAI** - State-of-the-art language models
-- **ChromaDB** - Efficient vector database
-- **PyMuPDF** - Excellent PDF processing library
-
----
-
 ## 📧 Contact
 
 For questions or support, please open an issue on GitHub.
 
 ---
 
-### Made with ❤️ for automation using AI
+## 🙏 Acknowledgments
+
+* **LangChain** – Orchestration framework
+* **OpenAI** – GPT & embeddings
+* **ChromaDB** – Vector storage
+* **PyMuPDF** – PDF parsing
+
+---
+
+*Made with ❤️ to remove manual, error-prone validation from HR & compliance workflows.*
