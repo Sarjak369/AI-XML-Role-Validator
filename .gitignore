@@ -1,0 +1,62 @@
+# === Environment Variables ===
+.env
+.env.local
+.env.*.local
+
+# === Python Cache ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# === Virtual Environments ===
+venv/
+env/
+ENV/
+.venv
+uv.lock
+
+# === Vector Database Storage ===
+chroma_store/
+*.db
+*.sqlite3
+
+# === IDE & Editor Files ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+logs/
+*.log
+
+# === Temporary Files ===
+temp/
+tmp/
+*.tmp
+
+# === Distribution / Packaging ===
+build/
+dist/
+*.egg-info/
+
+# === Jupyter Notebooks ===
+.ipynb_checkpoints/
+*.ipynb
+
+# === pytest ===
+.pytest_cache/
+.coverage
+htmlcov/
+
+# === mypy ===
+.mypy_cache/
+.dmypy.json
+dmypy.json

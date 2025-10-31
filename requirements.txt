@@ -1,0 +1,15 @@
+lxml
+python-dotenv
+langchain
+langchain-openai
+langchain-community
+langchain-core
+langchain-chroma
+langchain-text-splitters
+openai
+chromadb
+thefuzz
+python-Levenshtein
+streamlit
+PyMUPDF
+tiktoken
