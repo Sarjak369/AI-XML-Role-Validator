@@ -131,7 +131,7 @@ This project **automates** that reasoning using **LLMs + RAG + fuzzy matching**,
 
 ### 9) Optional RAG Q&A — New roles in pipeline
 
-![Export](assets/UI/9.png)
+![Export](assets/ui/9.png)
 *Extract insights (e.g., new roles referenced) to support downstream decisions.*
 
 ---
