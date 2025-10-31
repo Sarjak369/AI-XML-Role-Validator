@@ -32,9 +32,9 @@ Organizations keep an official **master list of job roles** (e.g., HR database /
 
 **Questions the reviewer must answer:**
 
-* Is *Software Eng.* the same as **Software Engineer**?
+* Is *Software Eng.* equivalent to **Software Engineer**?
 * Does *QA Tester* map to **Quality Assurance Analyst**?
-* Is *Data Science Specialist* an allowed role or a mismatch?
+* Is *Data Science Specialist* a valid role from the approved list, or a mismatch?
 
 This project **automates** that reasoning using **LLMs + RAG + fuzzy matching**, then emits a **validation report** (and downloadable results) for auditability.
 
